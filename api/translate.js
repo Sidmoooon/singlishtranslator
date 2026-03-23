@@ -1,148 +1,66 @@
-// ===== STATE =====
-let direction = 'singlish-to-english';
-
-// ===== INIT =====
-window.addEventListener('DOMContentLoaded', () => {
-  const textarea = document.getElementById('user-input');
-  textarea.addEventListener('input', () => {
-    const len = textarea.value.length;
-    document.getElementById('char-count').textContent = `${len} / 2000`;
-    if (len > 2000) textarea.value = textarea.value.slice(0, 2000);
-  });
-});
-
-// ===== DIRECTION =====
-function setDirection(dir) {
-  direction = dir;
-
-  const btnEn = document.getElementById('btn-to-english');
-  const btnSg = document.getElementById('btn-to-singlish');
-  const inputLabel = document.getElementById('input-label');
-  const textarea = document.getElementById('user-input');
-  const examplesGrid = document.getElementById('examples-grid');
-
-  if (dir === 'singlish-to-english') {
-    btnEn.classList.add('active');
-    btnSg.classList.remove('active');
-    inputLabel.textContent = 'Enter Singlish';
-    textarea.placeholder = 'e.g. Wah lau, this project damn jialat sia...';
-    examplesGrid.innerHTML = `
-      <button class="example-pill" onclick="useExample(this)">Wah, this one very shiok leh!</button>
-      <button class="example-pill" onclick="useExample(this)">You think I don't know meh?</button>
-      <button class="example-pill" onclick="useExample(this)">Aiyah, can lah, don't worry so much.</button>
-      <button class="example-pill" onclick="useExample(this)">Rabak sia, the whole project jialat already.</button>
-      <button class="example-pill" onclick="useExample(this)">Eh, later we go makan where?</button>
-      <button class="example-pill" onclick="useExample(this)">Confirm plus chop he never study one.</button>
-    `;
-  } else {
-    btnSg.classList.add('active');
-    btnEn.classList.remove('active');
-    inputLabel.textContent = 'Enter Standard English';
-    textarea.placeholder = 'e.g. This situation is really messy and out of control.';
-    examplesGrid.innerHTML = `
-      <button class="example-pill" onclick="useExample(this)">Let's go eat later.</button>
-      <button class="example-pill" onclick="useExample(this)">I'm absolutely certain he didn't study.</button>
-      <button class="example-pill" onclick="useExample(this)">Don't worry, it'll be fine.</button>
-      <button class="example-pill" onclick="useExample(this)">This is really delicious!</button>
-      <button class="example-pill" onclick="useExample(this)">Are you serious right now?</button>
-      <button class="example-pill" onclick="useExample(this)">I'm very tired today.</button>
-    `;
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  resetOutput();
-}
+  const { text, direction } = req.body;
 
-// ===== EXAMPLES =====
-function useExample(btn) {
-  const textarea = document.getElementById('user-input');
-  textarea.value = btn.textContent;
-  textarea.dispatchEvent(new Event('input'));
-  translate();
-}
+  if (!text || !direction) {
+    return res.status(400).json({ error: 'Missing text or direction' });
+  }
 
-// ===== AUTO RESIZE =====
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.max(120, el.scrollHeight) + 'px';
-}
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key not configured on server.' });
+  }
 
-// ===== RESET OUTPUT =====
-function resetOutput() {
-  const outputBox = document.getElementById('output-box');
-  const glossaryStrip = document.getElementById('glossary-strip');
-  outputBox.innerHTML = '<p class="output-placeholder">Your translation will appear here.</p>';
-  glossaryStrip.style.display = 'none';
-}
+  const isToEnglish = direction === 'singlish-to-english';
 
-// ===== TRANSLATE =====
-async function translate() {
-  const input = document.getElementById('user-input').value.trim();
-  if (!input) return;
-
-  const btn = document.getElementById('translate-btn');
-  const outputBox = document.getElementById('output-box');
-  const outputLabel = document.getElementById('output-label');
-  const glossaryStrip = document.getElementById('glossary-strip');
-
-  btn.classList.add('loading');
-  btn.querySelector('.btn-text').textContent = 'Translating';
-  btn.querySelector('.btn-icon').textContent = '';
-  outputBox.innerHTML = '<p class="output-placeholder">Thinking…</p>';
-  glossaryStrip.style.display = 'none';
+  const systemPrompt = isToEnglish
+    ? `You are a Singlish-to-English translator for international students in Singapore.
+Singlish uses particles like lah, leh, lor, sia, meh, and words like shiok, jialat, kiasu, makan, blur, sian, rabak, chope, sabo, alamak, bojio, walao, aiyah, bochap, atas, confirm plus chop.
+Translate the input into clear Standard English, preserving meaning and tone.
+Return ONLY a JSON object, no markdown, no extra text:
+{"translation":"...","glossary":[{"term":"...","meaning":"..."}]}`
+    : `You are a Standard English-to-Singlish translator for Singapore.
+Make the text sound like a natural Singaporean — add particles (lah, leh, lor, sia, meh), drop articles, use local vocab (shiok, jialat, makan, blur, sian, kiasu, walao, aiyah, chope, sabo).
+Don't overdo it — keep it authentic, not a caricature.
+Return ONLY a JSON object, no markdown, no extra text:
+{"translation":"...","glossary":[{"term":"...","meaning":"..."}]}`;
 
   try {
-    const response = await fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: input, direction })
-    });
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ parts: [{ text }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+        })
+      }
+    );
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Server error');
+    if (!geminiRes.ok) {
+      const err = await geminiRes.json();
+      return res.status(geminiRes.status).json({ error: err.error?.message || 'Gemini API error' });
     }
 
-    outputLabel.textContent = direction === 'singlish-to-english'
-      ? 'English Translation'
-      : 'Singlish Version';
+    const data = await geminiRes.json();
+    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const cleaned = raw.replace(/```json|```/g, '').trim();
 
-    outputBox.textContent = data.translation || data.output || '';
-
-    if (data.glossary && data.glossary.length > 0) {
-      const tagsContainer = document.getElementById('glossary-tags');
-      tagsContainer.innerHTML = data.glossary.map(item =>
-        `<span class="glossary-tag"><strong>${item.term}</strong> — ${item.meaning}</span>`
-      ).join('');
-      glossaryStrip.style.display = 'flex';
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch {
+      return res.status(200).json({ translation: raw, glossary: [] });
     }
+
+    return res.status(200).json(parsed);
 
   } catch (err) {
-    outputBox.innerHTML = `<p style="color: var(--accent);">Error: ${err.message}</p>`;
-  } finally {
-    btn.classList.remove('loading');
-    btn.querySelector('.btn-text').textContent = 'Translate';
-    btn.querySelector('.btn-icon').textContent = '→';
+    return res.status(500).json({ error: err.message });
   }
 }
-
-// ===== COPY =====
-function copyOutput() {
-  const text = document.getElementById('output-box').textContent;
-  if (!text || text === 'Your translation will appear here.') return;
-
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('copy-btn');
-    btn.classList.add('copied');
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 15 4 10"/></svg> Copied`;
-    setTimeout(() => {
-      btn.classList.remove('copied');
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2v1"/></svg> Copy`;
-    }, 2000);
-  });
-}
-
-// ===== ENTER KEY =====
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') translate();
-});
