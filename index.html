@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lah. — Singlish Translator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">Lah<span class="dot">.</span></div>
+    <p class="tagline">Singapore English, decoded.</p>
+  </header>
+
+  <main>
+    <section class="translator-card">
+
+      <!-- Direction Toggle -->
+      <div class="direction-toggle">
+        <button class="dir-btn active" id="btn-to-english" onclick="setDirection('singlish-to-english')">
+          Singlish → English
+        </button>
+        <div class="toggle-divider"></div>
+        <button class="dir-btn" id="btn-to-singlish" onclick="setDirection('english-to-singlish')">
+          English → Singlish
+        </button>
+      </div>
+
+      <!-- Input -->
+      <div class="input-section">
+        <label class="field-label" id="input-label">Enter Singlish</label>
+        <textarea
+          id="user-input"
+          placeholder="e.g. Wah lau, this project damn jialat sia..."
+          rows="5"
+          oninput="autoResize(this)"
+        ></textarea>
+        <div class="input-meta">
+          <span class="char-count" id="char-count">0 / 2000</span>
+          <div class="input-type-pills">
+            <span class="pill active">Word</span>
+            <span class="pill active">Sentence</span>
+            <span class="pill active">Email / Long text</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Translate Button -->
+      <button class="translate-btn" id="translate-btn" onclick="translate()">
+        <span class="btn-text">Translate</span>
+        <span class="btn-icon">→</span>
+      </button>
+
+      <!-- Output -->
+      <div class="output-section" id="output-section">
+        <div class="output-header">
+          <label class="field-label" id="output-label">Translation</label>
+          <button class="copy-btn" id="copy-btn" onclick="copyOutput()" title="Copy">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+        <div class="output-box" id="output-box">
+          <p class="output-placeholder">Your translation will appear here.</p>
+        </div>
+
+        <!-- Glossary callout -->
+        <div class="glossary-strip" id="glossary-strip" style="display:none">
+          <span class="glossary-label">Key terms</span>
+          <div class="glossary-tags" id="glossary-tags"></div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Example pills -->
+    <section class="examples-section">
+      <p class="examples-heading">Try an example</p>
+      <div class="examples-grid" id="examples-grid">
+        <button class="example-pill" onclick="useExample(this)">Wah, this one very shiok leh!</button>
+        <button class="example-pill" onclick="useExample(this)">You think I don't know meh?</button>
+        <button class="example-pill" onclick="useExample(this)">Aiyah, can lah, don't worry so much.</button>
+        <button class="example-pill" onclick="useExample(this)">Rabak sia, the whole project jialat already.</button>
+        <button class="example-pill" onclick="useExample(this)">Eh, later we go makan where?</button>
+        <button class="example-pill" onclick="useExample(this)">Confirm plus chop he never study one.</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Built for international students navigating Singapore 🇸🇬 &nbsp;·&nbsp; Powered by Claude AI</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
