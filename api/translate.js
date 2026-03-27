@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing text or direction' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured on server.' });
   }
@@ -29,26 +29,28 @@ Return ONLY a JSON object, no markdown, no extra text:
 {"translation":"...","glossary":[{"term":"...","meaning":"..."}]}`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ parts: [{ text }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
-        })
-      }
-    );
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: text }]
+      })
+    });
 
-    if (!geminiRes.ok) {
-      const err = await geminiRes.json();
-      return res.status(geminiRes.status).json({ error: err.error?.message || 'Gemini API error' });
+    if (!claudeRes.ok) {
+      const err = await claudeRes.json();
+      return res.status(claudeRes.status).json({ error: err.error?.message || 'Claude API error' });
     }
 
-    const data = await geminiRes.json();
-    const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const data = await claudeRes.json();
+    const raw = data.content?.[0]?.text || '';
     const cleaned = raw.replace(/```json|```/g, '').trim();
 
     let parsed;
