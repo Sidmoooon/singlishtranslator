@@ -14,7 +14,6 @@ window.addEventListener('DOMContentLoaded', () => {
 // ===== DIRECTION =====
 function setDirection(dir) {
   direction = dir;
-
   const btnEn = document.getElementById('btn-to-english');
   const btnSg = document.getElementById('btn-to-singlish');
   const inputLabel = document.getElementById('input-label');
@@ -48,7 +47,6 @@ function setDirection(dir) {
       <button class="example-pill" onclick="useExample(this)">I'm very tired today.</button>
     `;
   }
-
   resetOutput();
 }
 
@@ -130,7 +128,6 @@ async function translate() {
 function copyOutput() {
   const text = document.getElementById('output-box').textContent;
   if (!text || text === 'Your translation will appear here.') return;
-
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.classList.add('copied');
