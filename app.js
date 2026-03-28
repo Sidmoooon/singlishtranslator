@@ -1,78 +1,93 @@
 // ===== STATE =====
 let direction = 'singlish-to-english';
 
+const EXAMPLES = {
+  'singlish-to-english': [
+    'Wah, this one very shiok leh!',
+    "You think I don't know meh?",
+    "Aiyah, can lah, don't worry so much.",
+    'Rabak sia, the whole project jialat already.',
+    'Eh, later we go makan where?',
+    'Confirm plus chop he never study one.'
+  ],
+  'english-to-singlish': [
+    "Let's go eat later.",
+    "I'm absolutely certain he didn't study.",
+    "Don't worry, it'll be fine.",
+    'This is really delicious!',
+    'Are you serious right now?',
+    "I'm very tired today."
+  ]
+};
+
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', () => {
-  const textarea = document.getElementById('user-input');
-  textarea.addEventListener('input', () => {
-    const len = textarea.value.length;
+  // Textarea counter
+  document.getElementById('user-input').addEventListener('input', function() {
+    const len = this.value.length;
     document.getElementById('char-count').textContent = `${len} / 2000`;
-    if (len > 2000) textarea.value = textarea.value.slice(0, 2000);
+    if (len > 2000) this.value = this.value.slice(0, 2000);
   });
 
-  // Attach button click here to avoid conflict with browser's translate property
-  document.getElementById('translate-btn').addEventListener('click', runTranslate);
+  // Translate button
+  document.getElementById('translate-btn').addEventListener('click', function() {
+    runTranslate();
+  });
+
+  // Copy button
+  document.getElementById('copy-btn').addEventListener('click', function() {
+    copyOutput();
+  });
+
+  // Direction buttons
+  document.getElementById('btn-to-english').addEventListener('click', function() {
+    setDirection('singlish-to-english');
+  });
+  document.getElementById('btn-to-singlish').addEventListener('click', function() {
+    setDirection('english-to-singlish');
+  });
+
+  // Enter key
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
+  });
+
+  // Load initial examples
+  loadExamples();
 });
+
+// ===== EXAMPLES =====
+function loadExamples() {
+  const grid = document.getElementById('examples-grid');
+  grid.innerHTML = EXAMPLES[direction].map(text =>
+    `<button class="example-pill">${text}</button>`
+  ).join('');
+  grid.querySelectorAll('.example-pill').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById('user-input').value = this.textContent;
+      document.getElementById('char-count').textContent = `${this.textContent.length} / 2000`;
+      runTranslate();
+    });
+  });
+}
 
 // ===== DIRECTION =====
 function setDirection(dir) {
   direction = dir;
-  const btnEn = document.getElementById('btn-to-english');
-  const btnSg = document.getElementById('btn-to-singlish');
-  const inputLabel = document.getElementById('input-label');
-  const textarea = document.getElementById('user-input');
-  const examplesGrid = document.getElementById('examples-grid');
-
-  if (dir === 'singlish-to-english') {
-    btnEn.classList.add('active');
-    btnSg.classList.remove('active');
-    inputLabel.textContent = 'Enter Singlish';
-    textarea.placeholder = 'e.g. Wah lau, this project damn jialat sia...';
-    examplesGrid.innerHTML = `
-      <button class="example-pill" onclick="useExample(this)">Wah, this one very shiok leh!</button>
-      <button class="example-pill" onclick="useExample(this)">You think I don't know meh?</button>
-      <button class="example-pill" onclick="useExample(this)">Aiyah, can lah, don't worry so much.</button>
-      <button class="example-pill" onclick="useExample(this)">Rabak sia, the whole project jialat already.</button>
-      <button class="example-pill" onclick="useExample(this)">Eh, later we go makan where?</button>
-      <button class="example-pill" onclick="useExample(this)">Confirm plus chop he never study one.</button>
-    `;
-  } else {
-    btnSg.classList.add('active');
-    btnEn.classList.remove('active');
-    inputLabel.textContent = 'Enter Standard English';
-    textarea.placeholder = 'e.g. This situation is really messy and out of control.';
-    examplesGrid.innerHTML = `
-      <button class="example-pill" onclick="useExample(this)">Let's go eat later.</button>
-      <button class="example-pill" onclick="useExample(this)">I'm absolutely certain he didn't study.</button>
-      <button class="example-pill" onclick="useExample(this)">Don't worry, it'll be fine.</button>
-      <button class="example-pill" onclick="useExample(this)">This is really delicious!</button>
-      <button class="example-pill" onclick="useExample(this)">Are you serious right now?</button>
-      <button class="example-pill" onclick="useExample(this)">I'm very tired today.</button>
-    `;
-  }
+  document.getElementById('btn-to-english').classList.toggle('active', dir === 'singlish-to-english');
+  document.getElementById('btn-to-singlish').classList.toggle('active', dir === 'english-to-singlish');
+  document.getElementById('input-label').textContent = dir === 'singlish-to-english' ? 'Enter Singlish' : 'Enter Standard English';
+  document.getElementById('user-input').placeholder = dir === 'singlish-to-english'
+    ? 'e.g. Wah lau, this project damn jialat sia...'
+    : 'e.g. This situation is really messy and out of control.';
   resetOutput();
-}
-
-// ===== EXAMPLES =====
-function useExample(btn) {
-  const textarea = document.getElementById('user-input');
-  textarea.value = btn.textContent;
-  textarea.dispatchEvent(new Event('input'));
-  runTranslate();
-}
-
-// ===== AUTO RESIZE =====
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = Math.max(120, el.scrollHeight) + 'px';
+  loadExamples();
 }
 
 // ===== RESET OUTPUT =====
 function resetOutput() {
-  const outputBox = document.getElementById('output-box');
-  const glossaryStrip = document.getElementById('glossary-strip');
-  outputBox.innerHTML = '<p class="output-placeholder">Your translation will appear here.</p>';
-  glossaryStrip.style.display = 'none';
+  document.getElementById('output-box').innerHTML = '<p class="output-placeholder">Your translation will appear here.</p>';
+  document.getElementById('glossary-strip').style.display = 'none';
 }
 
 // ===== TRANSLATE =====
@@ -95,7 +110,7 @@ async function runTranslate() {
     const response = await fetch('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: input, direction })
+      body: JSON.stringify({ text: input, direction: direction })
     });
 
     const data = await response.json();
@@ -104,15 +119,11 @@ async function runTranslate() {
       throw new Error(data.error || 'Server error');
     }
 
-    outputLabel.textContent = direction === 'singlish-to-english'
-      ? 'English Translation'
-      : 'Singlish Version';
-
+    outputLabel.textContent = direction === 'singlish-to-english' ? 'English Translation' : 'Singlish Version';
     outputBox.textContent = data.translation || data.output || '';
 
     if (data.glossary && data.glossary.length > 0) {
-      const tagsContainer = document.getElementById('glossary-tags');
-      tagsContainer.innerHTML = data.glossary.map(item =>
+      document.getElementById('glossary-tags').innerHTML = data.glossary.map(item =>
         `<span class="glossary-tag"><strong>${item.term}</strong> — ${item.meaning}</span>`
       ).join('');
       glossaryStrip.style.display = 'flex';
@@ -141,8 +152,3 @@ function copyOutput() {
     }, 2000);
   });
 }
-
-// ===== ENTER KEY =====
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
-});
