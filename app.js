@@ -9,6 +9,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('char-count').textContent = `${len} / 2000`;
     if (len > 2000) textarea.value = textarea.value.slice(0, 2000);
   });
+
+  // Attach button click here to avoid conflict with browser's translate property
+  document.getElementById('translate-btn').addEventListener('click', runTranslate);
 });
 
 // ===== DIRECTION =====
@@ -55,7 +58,7 @@ function useExample(btn) {
   const textarea = document.getElementById('user-input');
   textarea.value = btn.textContent;
   textarea.dispatchEvent(new Event('input'));
-  translate();
+  runTranslate();
 }
 
 // ===== AUTO RESIZE =====
@@ -73,7 +76,7 @@ function resetOutput() {
 }
 
 // ===== TRANSLATE =====
-async function translate() {
+async function runTranslate() {
   const input = document.getElementById('user-input').value.trim();
   if (!input) return;
 
@@ -141,5 +144,5 @@ function copyOutput() {
 
 // ===== ENTER KEY =====
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') translate();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
 });
