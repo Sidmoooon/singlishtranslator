@@ -1,6 +1,21 @@
 // ===== STATE =====
 let direction = 'singlish-to-english';
+const startTime = Date.now();
 
+// ===== TRACKING =====
+const tracking = {
+  variant: 'A',
+  translationCount: 0,
+  modeUsed: null,
+  copyClicked: false,
+  timeOnPage: 0
+};
+
+function logEvent(event, detail = {}) {
+  console.log('[LAH-TRACKING]', JSON.stringify({ event, ...detail, variant: 'A', timestamp: Date.now() }));
+}
+
+// ===== EXAMPLES =====
 const EXAMPLES = {
   'singlish-to-english': [
     'Wah, this one very shiok leh!',
@@ -22,38 +37,28 @@ const EXAMPLES = {
 
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', () => {
-  // Textarea counter
   document.getElementById('user-input').addEventListener('input', function() {
     const len = this.value.length;
     document.getElementById('char-count').textContent = `${len} / 2000`;
     if (len > 2000) this.value = this.value.slice(0, 2000);
   });
 
-  // Translate button
-  document.getElementById('translate-btn').addEventListener('click', function() {
-    runTranslate();
-  });
+  document.getElementById('translate-btn').addEventListener('click', () => runTranslate());
+  document.getElementById('copy-btn').addEventListener('click', () => copyOutput());
+  document.getElementById('btn-to-english').addEventListener('click', () => setDirection('singlish-to-english'));
+  document.getElementById('btn-to-singlish').addEventListener('click', () => setDirection('english-to-singlish'));
 
-  // Copy button
-  document.getElementById('copy-btn').addEventListener('click', function() {
-    copyOutput();
-  });
-
-  // Direction buttons
-  document.getElementById('btn-to-english').addEventListener('click', function() {
-    setDirection('singlish-to-english');
-  });
-  document.getElementById('btn-to-singlish').addEventListener('click', function() {
-    setDirection('english-to-singlish');
-  });
-
-  // Enter key
-  document.addEventListener('keydown', function(e) {
+  document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
   });
 
-  // Load initial examples
+  window.addEventListener('beforeunload', () => {
+    tracking.timeOnPage = Math.round((Date.now() - startTime) / 1000);
+    logEvent('session_end', { ...tracking });
+  });
+
   loadExamples();
+  logEvent('page_load', { variant: 'A' });
 });
 
 // ===== EXAMPLES =====
@@ -95,6 +100,10 @@ async function runTranslate() {
   const input = document.getElementById('user-input').value.trim();
   if (!input) return;
 
+  tracking.translationCount++;
+  tracking.modeUsed = 'untracked';
+  logEvent('translate_clicked', { translationCount: tracking.translationCount });
+
   const btn = document.getElementById('translate-btn');
   const outputBox = document.getElementById('output-box');
   const outputLabel = document.getElementById('output-label');
@@ -110,14 +119,11 @@ async function runTranslate() {
     const response = await fetch('/api/translate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: input, direction: direction })
+      body: JSON.stringify({ text: input, direction })
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Server error');
-    }
+    if (!response.ok) throw new Error(data.error || 'Server error');
 
     outputLabel.textContent = direction === 'singlish-to-english' ? 'English Translation' : 'Singlish Version';
     outputBox.textContent = data.translation || data.output || '';
@@ -142,6 +148,8 @@ async function runTranslate() {
 function copyOutput() {
   const text = document.getElementById('output-box').textContent;
   if (!text || text === 'Your translation will appear here.') return;
+  tracking.copyClicked = true;
+  logEvent('copy_clicked', { translationCount: tracking.translationCount });
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
     btn.classList.add('copied');
