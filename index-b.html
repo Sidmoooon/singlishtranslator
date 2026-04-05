@@ -142,5 +142,25 @@ if(f=!1,v=d.querySelector('#vwoCode'),cc={},-1<d.URL.indexOf('__vwo_disable__')|
   </footer>
 
   <script src="app-b.js"></script>
+<!-- Exit Intent Popup -->
+<div id="exit-popup" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:16px; padding:32px; max-width:420px; width:90%; text-align:center; font-family:'Instrument Sans',sans-serif;">
+    <p style="font-size:1.4rem; font-weight:700; margin-bottom:8px;">Before you go! 👋</p>
+    <p style="font-size:0.9rem; color:#6B6760; margin-bottom:24px; line-height:1.6;">Got 60 seconds? Help us improve Lah. with a quick survey.</p>
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdyYpuucajXQpRmYDMpjE9mvtpwyLcm9LuK20xIwFGNUQ_CBA/viewform?usp=header" target="_blank" style="display:block; background:#1A1916; color:white; padding:12px; border-radius:10px; text-decoration:none; font-weight:600; margin-bottom:12px;">Take the survey →</a>
+    <button onclick="document.getElementById('exit-popup').style.display='none'" style="background:none; border:none; color:#9B9893; font-size:0.85rem; cursor:pointer;">No thanks</button>
+  </div>
+</div>
+
+<script>
+  let exitShown = false;
+  document.addEventListener('mouseleave', function(e) {
+    if (e.clientY < 10 && !exitShown) {
+      exitShown = true;
+      document.getElementById('exit-popup').style.display = 'flex';
+    }
+  });
+</script>
+  
 </body>
 </html>
