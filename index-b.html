@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lah. — Singlish Translator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style-b.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">Lah<span class="dot">.</span></div>
+    <p class="tagline">Your guide to Singapore English — decoded, in context, with examples.</p>
+  </header>
+
+  <div class="intro-banner">
+    <p>🇸🇬 <strong>Singlish</strong> is Singapore's colloquial language — a unique mix of English, Malay, Hokkien, Cantonese and Tamil. It's spoken by locals daily but can be confusing for newcomers. This tool explains not just <em>what</em> it means, but <em>when</em> and <em>how</em> it's used.</p>
+  </div>
+
+  <main>
+    <section class="translator-card">
+
+      <div class="direction-toggle">
+        <button class="dir-btn active" id="btn-to-english">Singlish → English</button>
+        <div class="toggle-divider"></div>
+        <button class="dir-btn" id="btn-to-singlish">English → Singlish</button>
+      </div>
+
+      <div class="mode-toggle">
+        <span class="mode-label">Input type:</span>
+        <button class="mode-btn active" id="mode-word" data-mode="word">Word / Term</button>
+        <button class="mode-btn" id="mode-sentence" data-mode="sentence">Sentence</button>
+        <button class="mode-btn" id="mode-long" data-mode="long">Long Text</button>
+      </div>
+
+      <div class="input-section">
+        <label class="field-label" id="input-label">Enter Singlish</label>
+        <textarea id="user-input" placeholder="e.g. Wah lau, this project damn jialat sia..." rows="5"></textarea>
+        <div class="input-meta">
+          <span class="char-count" id="char-count">0 / 2000</span>
+        </div>
+      </div>
+
+      <button class="translate-btn" id="translate-btn">
+        <span class="btn-text">Translate & Explain</span>
+        <span class="btn-icon">→</span>
+      </button>
+
+      <!-- Rich Output -->
+      <div class="rich-output" id="rich-output" style="display:none">
+
+        <div class="output-header">
+          <label class="field-label" id="output-label">Translation</label>
+          <button class="copy-btn" id="copy-btn" title="Copy translation">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+
+        <div class="translation-box" id="translation-box"></div>
+
+        <div class="rich-sections">
+
+          <div class="rich-section" id="section-meaning">
+            <div class="rich-section-header">
+              <span class="rich-icon">💡</span>
+              <span class="rich-section-title">What it means</span>
+            </div>
+            <div class="rich-section-body" id="body-meaning"></div>
+          </div>
+
+          <div class="rich-section" id="section-context">
+            <div class="rich-section-header">
+              <span class="rich-icon">🗺️</span>
+              <span class="rich-section-title">When it's used</span>
+            </div>
+            <div class="rich-section-body" id="body-context"></div>
+          </div>
+
+          <div class="rich-section" id="section-examples">
+            <div class="rich-section-header">
+              <span class="rich-icon">💬</span>
+              <span class="rich-section-title">Examples in a sentence</span>
+            </div>
+            <ul class="rich-list" id="body-examples"></ul>
+          </div>
+
+          <div class="rich-section" id="section-responses">
+            <div class="rich-section-header">
+              <span class="rich-icon">↩️</span>
+              <span class="rich-section-title">How to respond</span>
+            </div>
+            <ul class="rich-list" id="body-responses"></ul>
+          </div>
+
+          <div class="rich-section glossary-section" id="section-glossary">
+            <div class="rich-section-header">
+              <span class="rich-icon">📖</span>
+              <span class="rich-section-title">Key Singlish terms</span>
+            </div>
+            <div class="glossary-tags" id="glossary-tags"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="output-placeholder-box" id="placeholder-box">
+        <p>Your in-depth explanation will appear here.</p>
+      </div>
+
+    </section>
+
+    <section class="examples-section">
+      <p class="examples-heading">Try an example</p>
+      <div class="examples-grid" id="examples-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Built for international students navigating Singapore 🇸🇬 &nbsp;·&nbsp; Powered by Claude AI</p>
+  </footer>
+
+  <script src="app-b.js"></script>
+</body>
+</html>
