@@ -49,14 +49,10 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-to-english').addEventListener('click', () => setDirection('singlish-to-english'));
   document.getElementById('btn-to-singlish').addEventListener('click', () => setDirection('english-to-singlish'));
 
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
-  });
-
-  // Mode pills
-  document.querySelectorAll('.mode-pill').forEach(pill => {
-    pill.addEventListener('click', function() {
-      document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+  // Mode buttons
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       this.classList.add('active');
       currentMode = this.dataset.mode;
       tracking.modeUsed = currentMode;
@@ -65,7 +61,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Track time on page when leaving
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') runTranslate();
+  });
+
   window.addEventListener('beforeunload', () => {
     tracking.timeOnPage = Math.round((Date.now() - startTime) / 1000);
     logEvent('session_end', { ...tracking });
@@ -106,7 +105,8 @@ function setDirection(dir) {
   document.getElementById('btn-to-singlish').classList.toggle('active', dir === 'english-to-singlish');
   document.getElementById('input-label').textContent = dir === 'singlish-to-english' ? 'Enter Singlish' : 'Enter Standard English';
   updatePlaceholder();
-  document.getElementById('output-section').style.display = 'none';
+  document.getElementById('rich-output').style.display = 'none';
+  document.getElementById('placeholder-box').style.display = 'block';
   loadExamples();
 }
 
@@ -124,7 +124,9 @@ async function runTranslate() {
   btn.querySelector('.btn-text').textContent = 'Translating';
   btn.querySelector('.btn-icon').textContent = '';
 
-  document.getElementById('output-section').style.display = 'none';
+  document.getElementById('rich-output').style.display = 'none';
+  document.getElementById('placeholder-box').style.display = 'block';
+  document.getElementById('placeholder-box').innerHTML = '<p>Thinking…</p>';
 
   try {
     const response = await fetch('/api/translate-b', {
@@ -136,12 +138,10 @@ async function runTranslate() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Server error');
 
-    renderOutput(data, direction);
-    document.getElementById('output-section').style.display = 'flex';
+    renderOutput(data);
 
   } catch (err) {
-    document.getElementById('output-box').innerHTML = `<p style="color:var(--accent)">Error: ${err.message}</p>`;
-    document.getElementById('output-section').style.display = 'flex';
+    document.getElementById('placeholder-box').innerHTML = `<p style="color:var(--accent)">Error: ${err.message}</p>`;
   } finally {
     btn.classList.remove('loading');
     btn.querySelector('.btn-text').textContent = 'Translate & Explain';
@@ -150,30 +150,38 @@ async function runTranslate() {
 }
 
 // ===== RENDER =====
-function renderOutput(data, dir) {
-  // Translation
-  document.getElementById('output-label').textContent = dir === 'singlish-to-english' ? 'English Translation' : 'Singlish Version';
-  document.getElementById('output-box').textContent = data.translation || '';
+function renderOutput(data) {
+  document.getElementById('output-label').textContent = direction === 'singlish-to-english' ? 'English Translation' : 'Singlish Version';
+  document.getElementById('translation-box').textContent = data.translation || '';
 
-  // Context
-  document.getElementById('output-context').textContent = data.context || '';
+  // Context / meaning
+  const meaningBody = document.getElementById('body-meaning');
+  if (data.context) {
+    meaningBody.textContent = data.context;
+    document.getElementById('section-meaning').style.display = 'block';
+  } else {
+    document.getElementById('section-meaning').style.display = 'none';
+  }
+
+  // When it's used
+  document.getElementById('section-context').style.display = 'none';
 
   // Examples
-  const exList = document.getElementById('output-examples');
+  const exBody = document.getElementById('body-examples');
   if (data.examples && data.examples.length > 0) {
-    exList.innerHTML = data.examples.map(ex => `<div class="example-item">${ex}</div>`).join('');
-    document.getElementById('block-examples').style.display = 'block';
+    exBody.innerHTML = data.examples.map(ex => `<li>${ex}</li>`).join('');
+    document.getElementById('section-examples').style.display = 'block';
   } else {
-    document.getElementById('block-examples').style.display = 'none';
+    document.getElementById('section-examples').style.display = 'none';
   }
 
   // Responses
-  const resList = document.getElementById('output-responses');
+  const resBody = document.getElementById('body-responses');
   if (data.responses && data.responses.length > 0) {
-    resList.innerHTML = data.responses.map(r => `<div class="response-item">${r}</div>`).join('');
-    document.getElementById('block-responses').style.display = 'block';
+    resBody.innerHTML = data.responses.map(r => `<li>${r}</li>`).join('');
+    document.getElementById('section-responses').style.display = 'block';
   } else {
-    document.getElementById('block-responses').style.display = 'none';
+    document.getElementById('section-responses').style.display = 'none';
   }
 
   // Glossary
@@ -181,15 +189,18 @@ function renderOutput(data, dir) {
     document.getElementById('glossary-tags').innerHTML = data.glossary.map(item =>
       `<span class="glossary-tag"><strong>${item.term}</strong> — ${item.meaning}</span>`
     ).join('');
-    document.getElementById('block-glossary').style.display = 'block';
+    document.getElementById('section-glossary').style.display = 'block';
   } else {
-    document.getElementById('block-glossary').style.display = 'none';
+    document.getElementById('section-glossary').style.display = 'none';
   }
+
+  document.getElementById('placeholder-box').style.display = 'none';
+  document.getElementById('rich-output').style.display = 'block';
 }
 
 // ===== COPY =====
 function copyOutput() {
-  const text = document.getElementById('output-box').textContent;
+  const text = document.getElementById('translation-box').textContent;
   if (!text) return;
   tracking.copyClicked = true;
   logEvent('copy_clicked', { translationCount: tracking.translationCount });
@@ -199,7 +210,7 @@ function copyOutput() {
     btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 15 4 10"/></svg> Copied`;
     setTimeout(() => {
       btn.classList.remove('copied');
-      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2v1"/></svg> Copy`;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy`;
     }, 2000);
   });
 }
